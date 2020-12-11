@@ -75,12 +75,54 @@ void render2DTree(Node* node, pcl::visualization::PCLVisualizer::Ptr& viewer, Bo
 
 }
 
+bool IsElemInVector(std::vector<float> point ,std::vector<std::vector<float>> points)
+{
+	bool ret(false);
+	if(std::find(points.begin(), points.end(), point) != points.end())
+		ret = true;
+
+	return ret;
+}
+
+void ProximityScanner(std::vector<int> &cluster, std::vector<float> point, const std::vector<std::vector<float>>& points,std::vector<std::vector<float>> &processed_points, KdTree* tree, float distanceTol)
+{
+	std::vector<int> nearby_ids = tree->search(point, distanceTol);
+
+	for(int id: nearby_ids)
+	{
+		cluster.push_back(id);
+		if(IsElemInVector(points[id], processed_points) == false)
+		{
+			processed_points.push_back(points[id]);
+			ProximityScanner(cluster, points[id], points,processed_points, tree, distanceTol);
+		}
+	}
+}
+
 std::vector<std::vector<int>> euclideanCluster(const std::vector<std::vector<float>>& points, KdTree* tree, float distanceTol)
 {
 
 	// TODO: Fill out this function to return list of indices for each cluster
 
-	std::vector<std::vector<int>> clusters;
+	std::vector<std::vector<int>> clusters; //this stores the point id
+
+	std::vector<std::vector<float>> processed_points; //this stores the point coordinates
+
+	//iterate through each of the points
+	for (std::vector<float> point : points)
+	{
+		//std::cout<< "points are " << point[0] << " and " << point[1] <<std::endl;
+		if(IsElemInVector(point, processed_points) == false) //check if the point was already processed
+		{
+			//std::cout<<"not found" << std::endl;
+			processed_points.push_back(point);
+
+			std::vector<int> cluster; //create a new cluster
+			ProximityScanner(cluster, point, points,processed_points, tree, distanceTol);
+			clusters.push_back(cluster);
+		}
+
+	}
  
 	return clusters;
 
