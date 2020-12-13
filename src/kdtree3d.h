@@ -1,7 +1,12 @@
 /* \author Aaron Brown */
 // Quiz on implementing kd tree
 
-#include "../../render/render.h"
+#ifndef KDTREE3D_H_
+#define KDTREE3D_H_
+
+//#include "render/render.h"
+#include <iostream>
+#include <math.h>
 
 
 // Structure to represent node of kd tree
@@ -33,37 +38,37 @@ struct KdTree
 
 		//iterate through the node until we reach the insertion point
 		depth=0;
-		traverse_insert(&root, point, id );
-		//traverse_insert(&root, 0, point, id );
+		//traverse_insert(&root, point, id );
+		traverse_insert(&root, 0, point, id );
 	}
 
 
-	/*void traverse_insert(Node** node, uint depth ,std::vector<float> point, int id )
+	void traverse_insert(Node** node, uint depth ,std::vector<float> point, int id )
 	{
-		std::cout<<"depth " << depth << " point " << point[0]<<" , "<<point[1] << std::endl;
+		//std::cout<<"depth " << depth << " point " << point[0]<<" , "<<point[1] << std::endl;
 		if(*node == NULL) //empty tree
 		{
 			//TODO: Wont this memory vanish when the function is left ? If not what is the difference to stack and heap ?
 			*node = new Node(point, id);
-			std::cout<<"end node"<<std::endl;
+			//std::cout<<"end node"<<std::endl;
 		}
 		else
 		{
-			uint dpm = depth%2;
+			uint dpm = depth%3; //dpm==0 is X axis, dpm==1 is Y axis and dpm==2 is Z axis
 
 			if(point[dpm] < (*node)->point[dpm]) {
 				traverse_insert(&(*node)->left, depth+1,point,id);
 			}
 				
 				
-			else{
+			else{ //greater than or equal to values will be sent to the right node
 				traverse_insert(&(*node)->right, depth+1,point,id);
 			}
 				
 		}
-	}*/
+	}
 
-
+/*
 	void traverse_insert(Node** node, std::vector<float> point, int id )
 	{
 		//std::cout<<"depth " << depth << " point " << point[0]<<" , "<<point[1] << std::endl;
@@ -98,7 +103,7 @@ struct KdTree
 			}
 		}
 	}
-
+*/
 
 	// return a list of point ids in the tree that are within distance of target
 	std::vector<int> search(std::vector<float> target, float distanceTol)
@@ -122,16 +127,21 @@ This is a recrusive function so it takes one node as input at a time.
 		{
 			//std::cout<< "current node " << node->point[0] << " and " << node->point[1] << std::endl;
 
-			//if the present node is inside the bounding box of the traget, save the id
-			if(   (node->point[0] <= target[0]+dt)
-			   && (node->point[0] >= target[0]-dt)
-			   && (node->point[1] <= target[1]+dt)
-			   && (node->point[1] >= target[1]-dt)
+			/*if the present node is inside the bounding box of the traget, 
+			save the id after checking if its inside the radius
+			- this is done to reduce the radius computation load and making the algorithm fast*/
+			if(   (node->point[0] <= target[0]+dt) // X
+			   && (node->point[0] >= target[0]-dt) // X
+			   && (node->point[1] <= target[1]+dt) // Y
+			   && (node->point[1] >= target[1]-dt) // Y
+			   && (node->point[2] <= target[2]+dt) // Z
+			   && (node->point[2] >= target[2]-dt) // Z
 			)
-			{
+			{   //d = ((x2 - x1)2 + (y2 - y1)2 + (z2 - z1)2)1/2 
 				auto x1x2 = (node->point[0] - target[0]);
 				auto y1y2 = (node->point[1] - target[1]);
-				auto dist = sqrt((x1x2*x1x2)+(y1y2*y1y2));
+				auto z1z2 = (node->point[2] - target[2]);
+				auto dist = sqrt((x1x2*x1x2)+(y1y2*y1y2)+(z1z2*z1z2));
 
 				if(dist <= dt)
 				{
@@ -140,13 +150,15 @@ This is a recrusive function so it takes one node as input at a time.
 				}
 			}
 
+			uint dpm = depth%3; //dpm==0 is X axis, dpm==1 is Y axis and dpm==2 is Z axis
+
 			//the next node to be analysed is decided here
-			if((target[depth%2]-dt) < node->point[depth%2])
+			if((target[dpm]-dt) < node->point[dpm])
 			{
 				traverse_search(target, node->left,dt, depth+1, ids);
 			}
 
-			if((target[depth%2]+dt) > node->point[depth%2])
+			if((target[dpm]+dt) >= node->point[dpm]) //greater than or equal to, got to right node
 			{
 				traverse_search(target, node->right,dt, depth+1, ids);
 			}
@@ -154,6 +166,4 @@ This is a recrusive function so it takes one node as input at a time.
 	}
 };
 
-
-
-
+#endif /* KDTREE3D_H_ */

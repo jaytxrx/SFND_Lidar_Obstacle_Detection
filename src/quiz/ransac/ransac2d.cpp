@@ -108,7 +108,7 @@ std::unordered_set<int> RansacPlane(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, i
         //iterate through all the points and find if they are inliers
         for(int index = 0; index < cloud->points.size(); index++)
         {
-            if(inliers.count(index)>0) //if the point is already in our inlier list
+            if(inliers.count(index)>0) //if the point(index - passed as count parameter) is already in our inlier list
                 continue;
 
             auto i = cloud->points[index];
